@@ -78,7 +78,7 @@ def animateGraph(n):
             range=[min(x), max(x)],
         ),
         yaxis=dict(
-            range=[min(download), max(download)],
+            range=[min(min(upload), min(download)), max(max(download), max(upload))],
             fixedrange=False
         )
     )

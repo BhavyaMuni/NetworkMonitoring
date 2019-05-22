@@ -13,17 +13,13 @@ upload = []
 upload.append(1)
 x = []
 x.append(0)
-external_css = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css', {
-    'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css',
-    'rel': 'stylesheet',
-    'integrity': 'sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T',
-    'crossorigin': 'anonymous'
-}]
 
-app = dash.Dash(__name__, external_stylesheet=external_css)
+app = dash.Dash(__name__)
+
+server = app.server
 app.layout = html.Div(
     [
-        html.H1("Internet usage", className='h1'),
+        html.H1("Internet usage", className='h1', style={'font-family': 'sans-serif'}),
         dcc.Graph(id='live-graph', animate=True),
         dcc.Interval(id='graph-update', interval=1000, n_intervals=0),
     ]

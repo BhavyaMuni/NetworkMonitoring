@@ -1,86 +1,47 @@
-from psutil import *
-from collections import deque
+import click
+from psutil import net_io_counters
 import time
-import dash
-from dash.dependencies import Output, Input
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.graph_objs as go
-
-download = []
-download.append(1)
-upload = []
-upload.append(1)
-x = []
-x.append(0)
-
-app = dash.Dash(__name__)
-
-server = app.server
-app.layout = html.Div(
-    [
-        html.H1("Internet usage", className='h1', style={'font-family': 'sans-serif'}),
-        dcc.Graph(id='live-graph', animate=True),
-        dcc.Interval(id='graph-update', interval=1000, n_intervals=0),
-    ]
-)
 
 
-def get_bytes():
-    bytes_recv_last = net_io_counters().bytes_recv
-    time_last = time.time()
-    bytes_sent_last = net_io_counters().bytes_sent
-    return[bytes_recv_last, time_last, bytes_sent_last]
+@click.command()
+@click.option("--type", prompt="Type(u/d/both)")
+def get_bandwidth(type):
+    while True:
+        if type == 'both':
+            up1 = net_io_counters().bytes_sent
+            down1 = net_io_counters().bytes_recv
+            t1 = time.time()
+            time.sleep(2)
+            up2 = net_io_counters().bytes_sent
+            down2 = net_io_counters().bytes_recv
+            t2 = time.time()
 
-@app.callback(Output('live-graph', 'figure'), [Input('graph-update', 'n_intervals')])
-def animateGraph(n):
+            down_kb = ((down2-down1)/(t2-t1))/1024
+            up_kb = ((up2-up1)/(t2-t1))/1024
+        
+            click.echo("Upload : {} kb/s \nDownload : {} kb/s\n".format(up_kb, down_kb))
+        elif type == 'd':
+            down1 = net_io_counters().bytes_recv
+            t1 = time.time()
+            time.sleep(2)
+            down2 = net_io_counters().bytes_recv
+            t2 = time.time()
 
-    b = get_bytes()
-    
-    bytes_recv_now = net_io_counters().bytes_recv
-    bytes_sent_now = net_io_counters().bytes_sent
-    time_now = time.time()
-    
-    kb_recv = ((bytes_recv_now-b[0])/(time_now-b[1]))/1024
-    kb_sent = ((bytes_sent_now-b[2])/(time_now-b[1]))/1024
+            down_kb = ((down2-down1)/(t2-t1))/1024
 
-    upload.append(kb_sent)
-    download.append(kb_recv)
-    x.append(x[-1]+0.5)
+            click.echo("Download : {} kb/s\n".format(down_kb))
+        elif type == 'u':
+            up1 = net_io_counters().bytes_sent
+            t1 = time.time()
+            time.sleep(2)
+            up2 = net_io_counters().bytes_sent
+            t2 = time.time()
 
-    time_last = time_now
-    bytes_recv_last = bytes_recv_now
+            up_kb = ((up2-up1)/(t2-t1))/1024
 
-    data = go.Scatter(
-        y=list(download),
-        line=go.scatter.Line(
-            color='#42C4F7'
-        ),
-        mode='lines+markers',
-        name="Download"
-    )
+            click.echo("Upload : {} kb/s\n".format(up_kb))
 
-    data2 = go.Scatter(
-        y=list(upload),
-        line=go.scatter.Line(
-            color='#FF6961'
-        ),
-        mode='lines+markers',
-        name="Upload"
-    )
-
-    layout = go.Layout(
-        xaxis=dict(
-            range=[min(x), max(x)],
-        ),
-        yaxis=dict(
-            range=[min(min(upload), min(download)), max(max(download), max(upload))],
-            fixedrange=False
-        )
-    )
-
-    return go.Figure(data=[data, data2], layout=layout)
-
+    click.clear()
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    get_bandwidth()
